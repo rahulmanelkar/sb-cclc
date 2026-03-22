@@ -12,38 +12,35 @@ uv sync
 
 ## Usage
 
-Via the CLI entrypoint:
+Save a quick thought:
 
 ```bash
-uv run second_brain
+second_brain new "My brilliant idea about caching"
+# Saved: /home/user/second_brain/20260322_153045.md
 ```
 
-With dev environment:
+Notes are saved as plain markdown files with a timestamp filename (`YYYYMMDD_HHMMSS.md`).
+
+Via the module:
 
 ```bash
-uv run --env-file .env second_brain
+uv run python -m second_brain new "My brilliant idea"
 ```
 
-Via Python module:
+## Configuration
 
-```bash
-uv run python -m second_brain
+`second_brain` reads `~/.env` on startup. Set `BRAIN_PATH` to control where notes are stored.
+
+```dotenv
+# ~/.env
+BRAIN_PATH=/home/user/notes/second_brain
 ```
 
-## Environment Variables
-
-Copy `.env.example` to `.env` for development:
-
-```bash
-cp .env.example .env
-```
-
-Note: `uv run --env-file .env` loads the dev environment explicitly (no auto-loading).
-
-| Variable    | Default   | Description                                         |
-|-------------|-----------|-----------------------------------------------------|
-| `LOG_LEVEL` | `INFO`    | Console log level. Set to `DEBUG` in `.env` for verbose output. |
-| `LOG_FILE`  | `app.log` | Path to the log file.                               |
+| Variable     | Default           | Description                                         |
+|--------------|-------------------|-----------------------------------------------------|
+| `BRAIN_PATH` | `~/second_brain/` | Directory where markdown notes are saved.           |
+| `LOG_LEVEL`  | `INFO`            | Console log level. Set to `DEBUG` for verbose output. |
+| `LOG_FILE`   | `app.log`         | Path to the log file.                               |
 
 ## Testing
 
