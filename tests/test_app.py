@@ -1,76 +1,77 @@
-import os
-from pathlib import Path
+import re
 
 import pytest
-from click.testing import CliRunner
 
-from second_brain.app import main
-
-
-@pytest.fixture()
-def brain_path(tmp_path, monkeypatch):
-    path = tmp_path / "second_brain"
-    monkeypatch.setenv("BRAIN_PATH", str(path))
-    return path
+from second_brain.app import console_format, main
 
 
-def test_new_creates_file(brain_path):
-    runner = CliRunner()
-    result = runner.invoke(main, ["new", "My brilliant idea about caching"])
-    assert result.exit_code == 0
-    files = list(brain_path.glob("*.md"))
-    assert len(files) == 1
+class _Level:
+    """Minimal stand-in for loguru's record level object."""
+
+    def __init__(self, name):
+        self.name = name
 
 
-def test_new_file_content(brain_path):
-    runner = CliRunner()
-    runner.invoke(main, ["new", "My brilliant idea about caching"])
-    files = list(brain_path.glob("*.md"))
-    assert files[0].read_text() == "My brilliant idea about caching"
+# -- Unit tests for console_format ------------------------------------------
 
 
-def test_new_creates_brain_dir_if_missing(tmp_path, monkeypatch):
-    path = tmp_path / "does_not_exist" / "brain"
-    monkeypatch.setenv("BRAIN_PATH", str(path))
-    runner = CliRunner()
-    result = runner.invoke(main, ["new", "hello"])
-    assert result.exit_code == 0
-    assert path.exists()
+def test_console_format_returns_compact_string():
+    record = {"level": _Level("INFO")}
+    result = console_format(record)
+
+    assert "INF" in result
+    assert " | " in result
+    assert result.endswith("\n{exception}")
+    assert "INFO" not in result
 
 
-def test_new_filename_is_timestamp_based(brain_path):
-    """Filename should match YYYYMMDD_HHMMSS.md pattern."""
-    runner = CliRunner()
-    runner.invoke(main, ["new", "a thought"])
-    files = list(brain_path.glob("*.md"))
-    name = files[0].stem
-    # stem must be 15 chars: YYYYMMDD_HHMMSS
-    assert len(name) == 15
-    assert name[8] == "_"
-    assert name[:8].isdigit()
-    assert name[9:].isdigit()
+@pytest.mark.parametrize(
+    "level_name,expected_short",
+    [
+        ("TRACE", "TRC"),
+        ("DEBUG", "DBG"),
+        ("INFO", "INF"),
+        ("SUCCESS", "SUC"),
+        ("WARNING", "WRN"),
+        ("ERROR", "ERR"),
+        ("CRITICAL", "CRT"),
+    ],
+)
+def test_console_format_all_levels(level_name, expected_short):
+    record = {"level": _Level(level_name)}
+    result = console_format(record)
+    assert expected_short in result
 
 
-def test_new_default_brain_path(tmp_path, monkeypatch):
-    """When BRAIN_PATH is not set, defaults to ~/second_brain/."""
-    monkeypatch.delenv("BRAIN_PATH", raising=False)
-    fake_home = tmp_path / "home"
-    fake_home.mkdir()
-    monkeypatch.setenv("HOME", str(fake_home))
-    runner = CliRunner()
-    result = runner.invoke(main, ["new", "default path test"])
-    assert result.exit_code == 0
-    assert (fake_home / "second_brain").exists()
+def test_console_format_unknown_level_falls_back_to_slice():
+    record = {"level": _Level("CUSTOM_LEVEL")}
+    result = console_format(record)
+    assert "CUS" in result
 
 
-def test_new_prints_saved_path(brain_path):
-    runner = CliRunner()
-    result = runner.invoke(main, ["new", "check output"])
-    assert str(brain_path) in result.output
+# -- Integration tests -------------------------------------------------------
 
 
-def test_main_no_args_shows_help():
-    runner = CliRunner()
-    result = runner.invoke(main, [])
-    assert result.exit_code == 0
-    assert "new" in result.output
+def test_main_logs_greeting(capfd):
+    main()
+    captured = capfd.readouterr()
+    assert "Hello from second_brain!" in captured.err
+
+
+def test_main_console_output_matches_compact_format(capfd):
+    main()
+    captured = capfd.readouterr()
+    lines = [ln for ln in captured.err.strip().splitlines() if ln.strip()]
+    assert lines, "Expected at least one log line on stderr"
+    pattern = r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \| \w{3} \| .+:.+:\d+ \| .+"
+    for line in lines:
+        assert re.match(pattern, line), f"Line does not match compact format: {line!r}"
+
+
+def test_file_handler_uses_compact_format(tmp_path, monkeypatch):
+    log_file = tmp_path / "verify.log"
+    monkeypatch.setenv("LOG_FILE", str(log_file))
+    main()
+    content = log_file.read_text()
+    pattern = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \| \w{3} \| .+:.+:\d+ \| .+"
+    assert re.search(pattern, content), f"Log file content does not match compact format: {content!r}"

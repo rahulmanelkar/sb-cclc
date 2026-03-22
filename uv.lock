@@ -659,7 +659,6 @@ source = { editable = "." }
 dependencies = [
     { name = "click" },
     { name = "loguru" },
-    { name = "python-dotenv" },
 ]
 
 [package.dev-dependencies]
@@ -675,9 +674,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "click", specifier = ">=8.3.1" },
-    { name = "loguru", specifier = ">=0.7" },
-    { name = "python-dotenv", specifier = ">=1.2.2" },
+    { name = "click", specifier = ">=8.1,<9" },
+    { name = "loguru" },
 ]
 
 [package.metadata.requires-dev]
