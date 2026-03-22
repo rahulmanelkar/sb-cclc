@@ -12,35 +12,58 @@ uv sync
 
 ## Usage
 
-Save a quick thought:
+Capture a quick thought:
 
 ```bash
-second_brain new "My brilliant idea about caching"
-# Saved: /home/user/second_brain/20260322_153045.md
+uv run second_brain new "My brilliant idea about caching"
 ```
 
-Notes are saved as plain markdown files with a timestamp filename (`YYYYMMDD_HHMMSS.md`).
+This creates `~/second_brain/2026-03-22-my-brilliant-idea-about-caching.md` with a heading and timestamp. Duplicate titles on the same day get a numeric suffix (`-1`, `-2`, …) to avoid overwriting.
 
-Via the module:
+List all notes:
 
 ```bash
-uv run python -m second_brain new "My brilliant idea"
+uv run second_brain list
 ```
 
-## Configuration
+Show a note's content:
 
-`second_brain` reads `~/.env` on startup. Set `BRAIN_PATH` to control where notes are stored.
-
-```dotenv
-# ~/.env
-BRAIN_PATH=/home/user/notes/second_brain
+```bash
+uv run second_brain show 1
 ```
 
-| Variable     | Default           | Description                                         |
-|--------------|-------------------|-----------------------------------------------------|
-| `BRAIN_PATH` | `~/second_brain/` | Directory where markdown notes are saved.           |
-| `LOG_LEVEL`  | `INFO`            | Console log level. Set to `DEBUG` for verbose output. |
-| `LOG_FILE`   | `app.log`         | Path to the log file.                               |
+With dev environment variables:
+
+```bash
+uv run --env-file .env second_brain new "Some thought"
+```
+
+Via Python module:
+
+```bash
+uv run python -m second_brain new "Some thought"
+```
+
+## Environment Variables
+
+`.env.example` is the committed template — copy it to `.env` for development:
+
+```bash
+cp .env.example .env
+```
+
+| Variable           | Default            | Description                                         |
+|--------------------|--------------------|-----------------------------------------------------|
+| `SECOND_BRAIN_DIR` | `~/second_brain/`  | Directory where notes are stored. Created automatically. |
+| `LOG_LEVEL`        | `INFO`             | Console log level. Set to `DEBUG` in `.env` for verbose output. |
+| `LOG_FILE`         | `app.log`          | Path to the log file.                               |
+
+Note: `uv run --env-file .env` loads the dev environment explicitly (no auto-loading).
+
+## Log Format
+
+Console output uses a compact format with 3-letter level codes (INF, DBG, WRN, etc.).
+See the [Usage Guide](docs/usage.md) for details.
 
 ## Testing
 
