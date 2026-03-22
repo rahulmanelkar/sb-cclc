@@ -42,7 +42,7 @@ def configure_logging():
     log_file = os.environ.get("LOG_FILE", "app.log")
     logger.remove()
     logger.add(sys.stderr, level=log_level, format=console_format)
-    logger.add(log_file, level="DEBUG", rotation="50 KB", retention=1)
+    logger.add(log_file, level="DEBUG", format=console_format, rotation="50 KB", retention=1)
 
 
 @logger.catch

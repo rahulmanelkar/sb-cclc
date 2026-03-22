@@ -68,10 +68,10 @@ def test_main_console_output_matches_compact_format(capfd):
         assert re.match(pattern, line), f"Line does not match compact format: {line!r}"
 
 
-def test_file_handler_uses_default_format(tmp_path, monkeypatch):
+def test_file_handler_uses_compact_format(tmp_path, monkeypatch):
     log_file = tmp_path / "verify.log"
     monkeypatch.setenv("LOG_FILE", str(log_file))
     main()
     content = log_file.read_text()
-    assert "INFO" in content
-    assert " - Hello from second_brain!" in content
+    pattern = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \| \w{3} \| .+:.+:\d+ \| .+"
+    assert re.search(pattern, content), f"Log file content does not match compact format: {content!r}"
